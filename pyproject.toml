@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cosmos-synthia"
+version = "0.1.0.dev0"
+description = "Agent Skill and MCP tools for the Synthesizer Python package"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [
+    {name = "W. J. Roper", email = "w.roper@sussex.ac.uk"},
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "mcp>=2,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "ruff==0.15.15",
+]
+test = [
+    "pytest>=8",
+    "ruff==0.15.15",
+]
+docs = [
+    "furo",
+    "sphinx==7.4.7",
+    "sphinx-autodoc-typehints<3",
+    "sphinx-copybutton",
+]
+
+[project.scripts]
+synthia-mcp = "synthia.server:main"
+synthia-install = "synthia.install:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/synthia"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 79
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["D", "E", "F", "I", "W"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"src/synthia/skill/examples/**/*.py" = ["D"]
