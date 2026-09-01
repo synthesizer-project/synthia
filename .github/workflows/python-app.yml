@@ -1,0 +1,180 @@
+name: Synthia
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install pre-commit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pre-commit
+      - name: Run hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install '.[test]'
+      - name: Check lint
+        run: ruff check .
+      - name: Check formatting
+        run: ruff format --check --diff .
+      - name: Run tests
+        run: pytest
+
+  synthesizer:
+    # The matrix above installs no Synthesizer, so the HDF5 structure
+    # walk, the link refusal, the attribute budget, real grid listing
+    # and real API inspection all skip there. This leg runs them.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install with Synthesizer
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install '.[test]' cosmos-synthesizer h5py
+      - name: Run tests against the installed Synthesizer
+        run: pytest -q
+
+  wheel:
+    # Synthia's packaging story is the bundled skill inside the wheel.
+    # Hatchling's file selection honours VCS ignore files, so a broad
+    # .gitignore pattern can silently drop skill files from the build.
+    # The editable-install resource test in tests/ cannot see that.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+      - name: Verify the wheel carries every skill file
+        run: |
+          python - <<'PY'
+          import glob
+          import pathlib
+          import zipfile
+
+          source = pathlib.Path("src/synthia/skill")
+          expected = {
+              path.relative_to("src").as_posix()
+              for path in source.rglob("*")
+              if path.is_file() and "__pycache__" not in path.parts
+          }
+          assert expected, "no skill files found in the source tree"
+
+          wheel = glob.glob("dist/*.whl")[0]
+          shipped = set(zipfile.ZipFile(wheel).namelist())
+          missing = sorted(expected - shipped)
+          assert not missing, f"missing from {wheel}: {missing}"
+          print(f"{len(expected)} skill files present in {wheel}")
+          PY
+      - name: Install the wheel into a clean environment
+        run: |
+          python -m venv "${RUNNER_TEMP}/wheel-env"
+          "${RUNNER_TEMP}/wheel-env/bin/python" -m pip install --upgrade pip
+          "${RUNNER_TEMP}/wheel-env/bin/python" -m pip install dist/*.whl
+      - name: Verify packaged resources resolve outside the source tree
+        working-directory: ${{ runner.temp }}
+        run: |
+          "${RUNNER_TEMP}/wheel-env/bin/python" - <<'PY'
+          from importlib.resources import files
+
+          skill = files("synthia") / "skill"
+          for name in ("SKILL.md", "references/concepts.md"):
+              resource = skill.joinpath(name)
+              assert resource.is_file(), f"missing packaged resource: {name}"
+              assert resource.read_text(encoding="utf-8").strip()
+          print("packaged skill resources resolve")
+          PY
+      - name: Verify the console scripts are installed
+        run: |
+          test -x "${RUNNER_TEMP}/wheel-env/bin/synthia-mcp"
+          test -x "${RUNNER_TEMP}/wheel-env/bin/synthia-install"
+      - name: Verify the sdist carries the skill too
+        run: |
+          python - <<'PY'
+          import glob
+          import pathlib
+          import tarfile
+
+          source = pathlib.Path("src/synthia/skill")
+          expected = {
+              path.relative_to("src/synthia").as_posix()
+              for path in source.rglob("*")
+              if path.is_file() and "__pycache__" not in path.parts
+          }
+          sdist = glob.glob("dist/*.tar.gz")[0]
+          with tarfile.open(sdist) as archive:
+              shipped = {
+                  name.split("src/synthia/", 1)[1]
+                  for name in archive.getnames()
+                  if "src/synthia/" in name
+              }
+          missing = sorted(expected - shipped)
+          assert not missing, f"missing from {sdist}: {missing}"
+          print(f"{len(expected)} skill files present in {sdist}")
+          PY
+      - name: Exercise the installer dry-run in a sandboxed home
+        env:
+          HOME: ${{ runner.temp }}/fake-home
+          XDG_CONFIG_HOME: ${{ runner.temp }}/fake-home/.config
+        run: |
+          mkdir -p "${HOME}"
+          "${RUNNER_TEMP}/wheel-env/bin/synthia-install" --dry-run
+          test -z "$(find "${HOME}" -type f)" \
+            || (echo "dry-run wrote files" && exit 1)
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install '.[docs]'
+      - name: Build documentation
+        run: make -C docs html SPHINXOPTS="-W --keep-going"
