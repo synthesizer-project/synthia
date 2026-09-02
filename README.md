@@ -1,5 +1,8 @@
 # Synthia
 
+<img alt="synthia_logo" src="https://github.com/user-attachments/assets/49c685bd-69d8-4b65-bba1-d78c4813e76d" align="right" width="140px"/>
+
+
 Synthia is an agent companion for working with [Synthesizer](https://github.com/synthesizer-project/synthesizer). It is not designed as a replacement for a human user but aims to make learning and using Synthesizer easier.
 
 Synthia bundles an Agent Skill with a local MCP server so Claude Code, OpenCode, and other MCP-capable agents can answer Synthesizer questions from the user's actual installation rather than inflating context and relying on incomplete local memory.
