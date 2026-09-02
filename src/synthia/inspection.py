@@ -181,6 +181,105 @@ def _signature(obj: object) -> str:
     return f"{from_new}  # from __new__; cls is not passed by the caller"
 
 
+#: Cap on a rendered constant value.
+MAX_VALUE_CHARS = 2048
+
+#: Value types safe and useful to render verbatim. Registries and catalogues
+#: in Synthesizer are plain tuples, lists and dicts of these.
+_SCALARS = (str, int, float, bool, type(None))
+
+
+def _renderable(value: object, depth: int = 0) -> bool:
+    """Report whether a value is a small plain constant worth rendering."""
+    if isinstance(value, _SCALARS):
+        return True
+    # Depth 3 reaches a dict of lists of lists, which is the shape of the
+    # emission-line diagram catalogue.
+    if depth >= 3:
+        return False
+    if isinstance(value, (tuple, list, set, frozenset)):
+        return len(value) <= 256 and all(
+            _renderable(item, depth + 1) for item in value
+        )
+    if isinstance(value, dict):
+        return len(value) <= 256 and all(
+            isinstance(key, _SCALARS) and _renderable(item, depth + 1)
+            for key, item in value.items()
+        )
+    return False
+
+
+def _value(obj: object) -> str | None:
+    """Render a module-level constant, so catalogues can be read directly.
+
+    ``available_diagrams`` and ``ratios`` in ``line_ratios``, and the
+    ``PREMADE_MODELS`` and ``DUST_GENERATORS`` registries, are plain
+    constants. Their docstring is the builtin container's, which says
+    nothing, so without the value the only way to read them is the source.
+
+    Args:
+        obj: The already-resolved object.
+
+    Returns:
+        A repr of the value, or None when it is not a plain constant.
+    """
+    if isinstance(obj, type) or callable(obj) or inspect.ismodule(obj):
+        return None
+    if not _renderable(obj):
+        return None
+    rendered = repr(obj)
+    if len(rendered) > MAX_VALUE_CHARS:
+        return rendered[:MAX_VALUE_CHARS] + " ... (truncated)"
+    return rendered
+
+
+#: Cap on enumerated module members, and on each rendered signature.
+MAX_MEMBERS = 120
+MAX_MEMBER_SIGNATURE = 240
+
+
+def _members(obj: object) -> list[dict[str, str]] | None:
+    """Enumerate a module's public API so catalogues need not be read.
+
+    "Which star formation histories exist?", "which dust curves are
+    transformers?", "what generators can I pass?" are all one lookup on the
+    installed package, but only if the module lists what it holds. Without
+    this the only way to answer is to open the source file.
+
+    Args:
+        obj: The already-resolved object.
+
+    Returns:
+        One entry per public member, or None when ``obj`` is not a module.
+    """
+    if not inspect.ismodule(obj):
+        return None
+    listed = []
+    for name in sorted(dir(obj)):
+        if name.startswith("_") or len(listed) >= MAX_MEMBERS:
+            continue
+        # getattr_static keeps module __getattr__ and descriptors from running.
+        try:
+            member = inspect.getattr_static(obj, name)
+        except Exception:
+            continue
+        if inspect.ismodule(member):
+            kind = "module"
+        elif isinstance(member, type):
+            kind = "class"
+        elif callable(member):
+            kind = "function"
+        else:
+            kind = type(member).__name__
+        entry = {"name": name, "kind": kind}
+        if kind in {"class", "function"}:
+            rendered = _safe(lambda member=member: _signature(member))
+            if rendered:
+                entry["signature"] = rendered[:MAX_MEMBER_SIGNATURE]
+        listed.append(entry)
+    return listed
+
+
 def _text_attr(obj: object, name: str) -> str | None:
     """Read a string metadata attribute, or None if it is not one.
 
@@ -454,6 +553,12 @@ def inspect_synthesizer_api(dotted_name: str) -> dict[str, object]:
         # it is what recovers the real parameters. It is a plain
         # attribute read on an already-verified object.
         "signature": _safe(lambda: _signature(obj)),
+        # A module lists what it holds, so "which parametrisations /
+        # transformers / generators exist?" needs no source read.
+        "members": _members(obj),
+        # A registry or catalogue constant reports its contents; its
+        # docstring is the builtin container's and says nothing.
+        "value": _safe(lambda: _value(obj)),
         "doc": untrusted(doc, ".".join(segments)) if doc else None,
         "source": _safe(lambda: _source_location(obj)),
         "version": synthesizer_version,

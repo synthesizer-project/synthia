@@ -37,6 +37,36 @@ blames "particle based" objects, which is misleading in that case. The fix is to
 construct `synthesizer.parametric.Galaxy(stars=..., black_holes=...)` directly,
 which works.
 
+## Choosing an SFH or ZDist
+
+Do not recall these catalogues — enumerate them. `inspect_synthesizer_api` on
+`synthesizer.parametric.SFH` lists every star formation history with its
+constructor signature, and on `synthesizer.parametric.ZDist` every metallicity
+distribution. That is the whole answer to "what can I use here?", and it is
+version-exact where a list written here would drift.
+
+What the enumeration will not tell you is which to pick:
+
+- **A single burst or flat history** — `Constant` bounded by `max_age` and
+  `min_age`. The default `max_age` is small; set it deliberately.
+- **Smooth decline** — `Exponential`, `DecliningExponential`,
+  `DelayedExponential` or `TruncatedExponential`, all parametrised by a `tau`
+  plus an age range. `LogNormal` and `DoublePowerLaw` give a rising-then-
+  falling history with a peak age.
+- **Non-parametric, binned** — the `Continuity` family (`Continuity`,
+  `ContinuityFlex`, `ContinuityPSB`) and `Dirichlet` express a history as
+  ratios between age bins, in the style used by SED-fitting priors. These take
+  `agebins` and log SFR ratios rather than a timescale.
+- **Bursty or stochastic** — `Stochastic` needs a redshift and a kernel;
+  `CombinedSFH` weights several histories together.
+
+Metallicity: `DeltaConstant` fixes a single value — pass **either**
+`metallicity` or `log10metallicity`, not both — and `Normal` spreads it around
+a mean with a sigma.
+
+Every age argument needs time units. A bare number is a silent error of the
+kind described in `units-and-data.md`, not an exception.
+
 ## The SFZH
 
 A parametric `Stars` object holds an **SFZH**: the distribution of stellar mass

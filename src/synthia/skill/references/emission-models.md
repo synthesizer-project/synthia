@@ -56,7 +56,11 @@ lists instead — but read **both** of these, because they do not overlap:
   `PREMADE_MODELS` alone will tell you they do not exist.
 
 The lists are hand-maintained and can drift from the code, so treat them as
-candidate names and confirm each one resolves before using it. See
+candidate names and confirm each one resolves before using it.
+`inspect_synthesizer_api` reports either list's contents directly — pass
+`synthesizer.emission_models.PREMADE_MODELS` or `...DUST_GENERATORS` — and
+called on the module itself it enumerates every exported class with its
+signature. See
 `premade-emission-models.md` for the complete current stellar, AGN, common and
 dust-generator catalogue, including requirements and selection guidance.
 

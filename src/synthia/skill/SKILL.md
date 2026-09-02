@@ -119,6 +119,8 @@ from the user's data and state the inference explicitly.
 | "What is X / how does this fit together?" | `references/concepts.md` | `search_documentation` |
 | Set up / install / "which version am I on?" | `references/units-and-data.md` | `inspect_environment` |
 | Exact signature, defaults, attribute names | — | `inspect_synthesizer_api` |
+| "Which X exist?" — parametrisations, curves, generators, registries | — | `inspect_synthesizer_api` on the **module** |
+| Which spectra / lines does this grid hold? | — | `inspect_local_grid`, read `available` |
 | Which grids do I have? Where do they live? | `references/units-and-data.md` | `list_local_grids` |
 | Does this grid have that axis / line / spectrum? | `references/units-and-data.md` | `inspect_local_grid` |
 | Simulation particle data → observables | `references/particle.md` | `find_example` |
@@ -132,6 +134,7 @@ from the user's data and state the inference explicitly.
 | Building a custom emission network | `references/custom-emission-models.md` | `inspect_synthesizer_api` |
 | Model parameters, aliases or variations | `references/model-parameters.md` | `inspect_synthesizer_api` |
 | Photometry, spectroscopy, imaging, cubes | `references/observables.md` | `find_example` |
+| Emission lines, ratios, BPT and other diagrams | `references/lines.md` | `inspect_local_grid` |
 | Units, `unyt` errors, grid files, data dirs | `references/units-and-data.md` | `inspect_environment` |
 | An error, a wrong number, a silent surprise | `references/troubleshooting.md` | `inspect_synthesizer_api` |
 | Show the user a spectrum, lines, or grid coverage | `references/units-and-data.md` | `plot_grid_spectra`, `plot_grid_lines`, `plot_grid_ionising_luminosity` |
@@ -160,11 +163,22 @@ package source.
 
 ## Working rules
 
+**Enumerate, never recall, a catalogue.** `inspect_synthesizer_api` on a
+**module** lists its public members with signatures, and on a registry or
+catalogue constant it reports the value. That is how to answer "which star
+formation histories exist?" (`synthesizer.parametric.SFH`), "which dust
+curves can I use?" (`synthesizer.emission_models.attenuation`), "which dust
+generators?" (`synthesizer.emission_models.DUST_GENERATORS`), or "which BPT
+diagrams are defined?" (`synthesizer.emissions.line_ratios.available_diagrams`).
+Reading the source file for a list of names is never necessary and the list
+in any reference here may be out of date; the installed package is not.
+
 **Confirm names and grid contents before you use them.** Check every dotted
 path with `inspect_synthesizer_api` — import paths break scripts most often,
 and a Synthesizer docstring is wrong about one of them. Check every axis,
-spectrum key and line ID with `inspect_local_grid`, which reads the file's keys
-directly; a `Grid` loaded with `ignore_*` reports empty lists, not contents. If
+spectrum key and line ID with `inspect_local_grid`, whose `available` section
+lists the grid's spectra and every line ID it names (with a `truncated` flag
+when there are too many to return); a `Grid` loaded with `ignore_*` reports empty lists, not contents. If
 the user has no suitable grid, say so plainly.
 
 **Check which environment you are inspecting.** Synthia imports Synthesizer in
@@ -229,6 +243,7 @@ it. See `references/units-and-data.md`.
   transformation and combination graphs.
 - `references/model-parameters.md` — parameter resolution and model variants.
 - `references/observables.md` — instruments, photometry, imaging, spectroscopy.
+- `references/lines.md` — line ids, ratios, diagrams and their demarcations.
 - `references/units-and-data.md` — `unyt`, `Quantity`, grids, data directories.
 - `references/troubleshooting.md` — traps, silent errors, and their causes.
 - `examples/` — minimal, version-stamped scripts, all runnable offline with

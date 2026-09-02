@@ -383,6 +383,53 @@ def _structure(handle: object, h5py: object) -> dict[str, object]:
     }
 
 
+def _catalogue(structure: dict[str, object]) -> dict[str, object]:
+    """Pull the two questions actually asked out of the raw file structure.
+
+    "Which spectra does this grid have?" and "does it contain H-beta?" are
+    answerable from the HDF5 layout, but only by knowing that a spectrum is
+    a child of ``/spectra`` and that the line names live in ``/lines/id``.
+    Surfacing both directly removes that step, and removes the temptation
+    to guess a key that is not there.
+
+    Args:
+        structure: The structure section already collected from the file.
+
+    Returns:
+        Mapping with ``spectra`` and ``lines`` sections.
+    """
+    entries = structure.get("entries")
+    if not isinstance(entries, list):
+        return {}
+    spectra, lines, truncated = [], [], False
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        path = str(entry.get("path", ""))
+        parent, _, leaf = path.rpartition("/")
+        # A spectrum is a dataset directly under /spectra. The wavelength
+        # axis shares that group but is not a spectrum.
+        if (
+            parent == "/spectra"
+            and entry.get("kind") == "dataset"
+            and leaf not in {"wavelength", "normalisation"}
+        ):
+            spectra.append(leaf)
+        if path == "/lines/id":
+            values = entry.get("values")
+            if isinstance(values, list):
+                lines = [str(value) for value in values]
+                truncated = bool(entry.get("values_truncated"))
+    return {
+        "spectra": sorted(spectra),
+        "lines": {
+            "count": len(lines),
+            "ids": lines,
+            "truncated": truncated,
+        },
+    }
+
+
 def inspect_local_grid(grid_name: str) -> dict[str, object]:
     """Describe a local Synthesizer grid: axes, model, and contents.
 
@@ -485,6 +532,8 @@ def inspect_local_grid(grid_name: str) -> dict[str, object]:
             result["structure"] = _structure(handle, h5py)
     except Exception as exc:
         result["structure_error"] = describe(exc)
+    else:
+        result["available"] = _catalogue(result["structure"])
 
     return result
 
