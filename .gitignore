@@ -8,3 +8,4 @@ docs/source/_autosummary/
 dist/
 build/
 *.egg-info/
+/benchmarks/results/
