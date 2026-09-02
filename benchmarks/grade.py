@@ -13,6 +13,7 @@ to prevent. Scientific quality still needs the blind rubric.
 import argparse
 import ast
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -119,6 +120,9 @@ def runs(source: str, python: Path, timeout: int = 300) -> tuple[bool, str]:
                 text=True,
                 timeout=timeout,
                 cwd=directory,
+                # A script calling plt.show() would otherwise block until
+                # the timeout and be scored as "does not run".
+                env={**os.environ, "MPLBACKEND": "Agg"},
             )
         except subprocess.TimeoutExpired:
             return False, f"timed out after {timeout}s"

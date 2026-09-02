@@ -8,7 +8,8 @@ MCP server are present:
 * ``synthia`` gets a project-scoped copy of the bundled skill and the
   ``synthia-mcp`` server from the Synthesizer environment.
 
-``--strict-mcp-config`` is passed in both arms so servers configured on the
+``--strict-mcp-config`` is passed in both arms, and both get a throwaway
+``HOME``, so servers, settings, hooks and plugins configured on the
 developer's own machine cannot leak into either one.
 """
 
@@ -404,20 +405,24 @@ def run_case(
             ]
             if session:
                 command += ["--resume", session]
+        # Both backends get a throwaway HOME. Without it the agent reads the
+        # developer's own ~/.claude: a global CLAUDE.md, a settings model
+        # override, prompt hooks, and enabled plugins all leak into every run
+        # and change how the agent explores. Credentials live in the OS
+        # keychain, so authentication survives the swap.
         run_env = dict(env or {})
-        if backend == "opencode":
-            home = workdir / "home"
-            config_home = workdir / "config"
-            home.mkdir(exist_ok=True)
-            config_home.mkdir(exist_ok=True)
-            run_env.update(
-                {
-                    "HOME": str(home),
-                    "XDG_CONFIG_HOME": str(config_home),
-                    "PWD": str(workdir),
-                    "INIT_CWD": str(workdir),
-                }
-            )
+        home = workdir / "home"
+        config_home = workdir / "config"
+        home.mkdir(exist_ok=True)
+        config_home.mkdir(exist_ok=True)
+        run_env.update(
+            {
+                "HOME": str(home),
+                "XDG_CONFIG_HOME": str(config_home),
+                "PWD": str(workdir),
+                "INIT_CWD": str(workdir),
+            }
+        )
         try:
             done = subprocess.run(
                 command,

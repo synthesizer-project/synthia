@@ -76,9 +76,13 @@ def _bars(axis, records, cases, field, label):
     axis.spines[["top", "right", "left"]].set_visible(False)
     axis.tick_params(axis="y", length=0)
     axis.ticklabel_format(axis="x", style="plain")
-    if field != "wall_seconds":
+    if field == "exploration_bytes":
         axis.xaxis.set_major_formatter(
             FuncFormatter(lambda value, _: f"{value / 1000:g}k")
+        )
+    elif field == "cost_usd":
+        axis.xaxis.set_major_formatter(
+            FuncFormatter(lambda value, _: f"${value:.2f}")
         )
 
 
@@ -109,11 +113,12 @@ def main(argv: list[str] | None = None) -> int:
     ]
 
     panels = [
-        ("input_tokens", "Fresh input tokens"),
+        ("cost_usd", "Cost (USD, cache-aware)"),
+        ("wall_seconds", "Wall time (seconds)"),
         ("exploration_bytes", "Unstructured exploration (bytes)"),
     ]
     figure, axes = pyplot.subplots(
-        len(panels), 1, figsize=(10, 9), sharey=True
+        len(panels), 1, figsize=(10, 13), sharey=True
     )
     for axis, (field, label) in zip(axes, panels):
         _bars(axis, records, cases, field, label)
@@ -134,13 +139,14 @@ def main(argv: list[str] | None = None) -> int:
     figure.suptitle(
         "Targeted retrieval replaces source-code archaeology",
         x=0.08,
+        y=0.995,
         ha="left",
         fontsize=17,
         fontweight="bold",
     )
     figure.text(
         0.08,
-        0.955,
+        0.968,
         "Same tasks, model, and environment. Bars show median per case. "
         f"Runnable scripts: baseline {completed['baseline']}/"
         f"{totals['baseline']}, Synthia {completed['synthia']}/"
@@ -149,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
         fontsize=10,
     )
     figure.subplots_adjust(
-        left=0.24, right=0.97, top=0.91, bottom=0.06, hspace=0.3
+        left=0.24, right=0.97, top=0.945, bottom=0.05, hspace=0.28
     )
 
     out = (
