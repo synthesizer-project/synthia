@@ -259,3 +259,54 @@ def test_refuses_a_poisoned_root_module(stub_synthesizer, monkeypatch):
 
     assert "error" in result
     assert "doc" not in result
+
+
+def test_module_members_are_enumerated(stub_synthesizer):
+    """A module reports what it holds, so catalogues need no source read."""
+    result = inspect_synthesizer_api("synthesizer")
+    members = result["members"]
+    names = {entry["name"] for entry in members}
+
+    assert "safe" in names
+    assert all(not entry["name"].startswith("_") for entry in members)
+
+
+@pytest.mark.skipif(not HAS_SYNTHESIZER, reason="Synthesizer is not installed")
+def test_a_class_member_carries_its_signature():
+    """Enumeration is only useful if it saves the follow-up lookup."""
+    result = inspect_synthesizer_api("synthesizer.parametric.ZDist")
+    classes = [
+        entry for entry in result["members"] if entry["kind"] == "class"
+    ]
+
+    assert classes
+    assert any("signature" in entry for entry in classes)
+
+
+def test_a_leaf_object_enumerates_nothing():
+    """``members`` is for modules; anything else must report None."""
+    assert inspection._members(object()) is None
+
+
+def test_catalogue_constants_report_their_value():
+    """A registry's docstring says nothing, so the value must come back."""
+    assert inspection._value(("BPT-NII", "OHNO")) == "('BPT-NII', 'OHNO')"
+    assert inspection._value({"N2": ["a", "b"]}) == "{'N2': ['a', 'b']}"
+    assert inspection._value({"d": [["a"], ["b"]]}) is not None
+
+
+def test_values_that_are_not_plain_constants_are_withheld():
+    """Rendering is for small literals, never arbitrary objects."""
+    assert inspection._value(object()) is None
+    assert inspection._value(len) is None
+    assert inspection._value(list(range(300))) is None
+
+
+def test_an_oversized_value_is_truncated():
+    """A large literal must not blow the response budget."""
+    rendered = inspection._value(["x" * 100] * 100)
+
+    assert rendered is not None
+    assert rendered.endswith("(truncated)")
+    assert len(rendered) <= inspection.MAX_VALUE_CHARS + 32
+

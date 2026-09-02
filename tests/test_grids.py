@@ -6,6 +6,7 @@ from importlib.util import find_spec
 
 import pytest
 
+from synthia import grids
 from synthia.grids import (
     _axis,
     _grid_path,
@@ -330,3 +331,53 @@ def test_inspect_local_grid_describes_a_real_grid():
     assert "structure_error" not in result
     assert result["structure"]["entries"]
     assert json.dumps(result, allow_nan=False)
+
+
+def test_available_section_names_spectra_and_lines():
+    """The two questions actually asked are answered without HDF5 knowledge."""
+    structure = {
+        "entries": [
+            {"path": "/spectra", "kind": "group"},
+            {"path": "/spectra/incident", "kind": "dataset"},
+            {"path": "/spectra/nebular", "kind": "dataset"},
+            {"path": "/spectra/wavelength", "kind": "dataset"},
+            {"path": "/spectra/normalisation", "kind": "dataset"},
+            {
+                "path": "/lines/id",
+                "kind": "dataset",
+                "values": ["H 1 4861.32A", "O 3 5006.84A"],
+                "values_truncated": False,
+            },
+        ]
+    }
+
+    available = grids._catalogue(structure)
+
+    # The wavelength axis and the normalisation share the group but are
+    # not spectra; reporting them would invite a bad extract key.
+    assert available["spectra"] == ["incident", "nebular"]
+    assert available["lines"]["count"] == 2
+    assert "H 1 4861.32A" in available["lines"]["ids"]
+    assert available["lines"]["truncated"] is False
+
+
+def test_available_section_propagates_truncation():
+    """A capped identifier list must say so, not imply completeness."""
+    structure = {
+        "entries": [
+            {
+                "path": "/lines/id",
+                "kind": "dataset",
+                "values": ["H 1 4861.32A"],
+                "values_truncated": True,
+            }
+        ]
+    }
+
+    assert grids._catalogue(structure)["lines"]["truncated"] is True
+
+
+def test_available_section_survives_a_missing_structure():
+    """A grid whose structure could not be read must not raise."""
+    assert grids._catalogue({}) == {}
+

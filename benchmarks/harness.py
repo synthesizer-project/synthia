@@ -8,9 +8,11 @@ MCP server are present:
 * ``synthia`` gets a project-scoped copy of the bundled skill and the
   ``synthia-mcp`` server from the Synthesizer environment.
 
-``--strict-mcp-config`` is passed in both arms, and both get a throwaway
-``HOME``, so servers, settings, hooks and plugins configured on the
-developer's own machine cannot leak into either one.
+``--strict-mcp-config`` is passed in both arms so servers configured on the
+developer's own machine cannot leak into either one, and
+``--setting-sources project`` keeps the developer's enabled plugins and
+prompt hooks out of both. A user-scope ``CLAUDE.md`` is memory rather than
+settings and still loads; state that with the results.
 """
 
 import json
@@ -49,48 +51,6 @@ def _ignore_non_source(directory: str, names: list[str]) -> list[str]:
         elif path.suffix not in {".py", ".yml", ".yaml"}:
             ignored.append(name)
     return ignored
-
-
-#: Keys copied from the developer's ``~/.claude.json`` into each run's
-#: throwaway one. Authentication and onboarding state only: enough for the
-#: CLI to start without a login prompt, and nothing that steers the agent.
-#: Notably excluded is ``projects``, which carries per-directory history.
-_AUTH_KEYS = (
-    "oauthAccount",
-    "userID",
-    "hasCompletedOnboarding",
-    "lastOnboardingVersion",
-    "firstStartTime",
-    "claudeCodeFirstTokenDate",
-    "hasAvailableSubscription",
-)
-
-
-def _isolated_home(workdir: Path) -> Path:
-    """Build a throwaway ``HOME`` that authenticates but carries no config.
-
-    Args:
-        workdir: The run directory to place the home inside.
-
-    Returns:
-        Path to the new home directory.
-    """
-    home = workdir / "home"
-    home.mkdir(exist_ok=True)
-    source = Path.home() / ".claude.json"
-    carried = {}
-    if source.is_file():
-        try:
-            stored = json.loads(source.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            stored = {}
-        carried = {
-            key: stored[key] for key in _AUTH_KEYS if key in stored
-        }
-    (home / ".claude.json").write_text(
-        json.dumps(carried), encoding="utf-8"
-    )
-    return home
 
 
 def _write_mcp_config(
@@ -440,6 +400,12 @@ def run_case(
                 "--mcp-config",
                 str(config),
                 "--strict-mcp-config",
+                # Load project-scope settings only. The developer's user
+                # scope carries enabled plugins and prompt hooks, which
+                # otherwise inject style and tooling instructions into
+                # every run of both arms.
+                "--setting-sources",
+                "project",
                 "--permission-mode",
                 "bypassPermissions",
                 "--allowedTools",
@@ -447,23 +413,20 @@ def run_case(
             ]
             if session:
                 command += ["--resume", session]
-        # Both backends get a throwaway HOME. Without it the agent reads the
-        # developer's own ~/.claude: a global CLAUDE.md, a settings model
-        # override, prompt hooks, and enabled plugins all leak into every run
-        # and change how the agent explores. Credentials live in the OS
-        # keychain, so authentication survives the swap.
         run_env = dict(env or {})
-        home = _isolated_home(workdir)
-        config_home = workdir / "config"
-        config_home.mkdir(exist_ok=True)
-        run_env.update(
-            {
-                "HOME": str(home),
-                "XDG_CONFIG_HOME": str(config_home),
-                "PWD": str(workdir),
-                "INIT_CWD": str(workdir),
-            }
-        )
+        if backend == "opencode":
+            home = workdir / "home"
+            config_home = workdir / "config"
+            home.mkdir(exist_ok=True)
+            config_home.mkdir(exist_ok=True)
+            run_env.update(
+                {
+                    "HOME": str(home),
+                    "XDG_CONFIG_HOME": str(config_home),
+                    "PWD": str(workdir),
+                    "INIT_CWD": str(workdir),
+                }
+            )
         try:
             done = subprocess.run(
                 command,
