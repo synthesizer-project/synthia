@@ -58,10 +58,15 @@ check, and the message misleadingly blames "particle based" objects. Build
 
 ## Emission models
 
-**`KeyError: 'total'`** — with `fesc=0` and no dust emission model,
-`TotalEmission` returns an `AttenuatedEmission` labelled `"attenuated"`, and
-`PacmanEmission` labels itself `"attenuated"`. Read `model.label`, or pass
-`label=` explicitly.
+**`KeyError: 'total'`** — the model labelled itself something else.
+`PacmanEmission` and `ScreenEmission` with `fesc=0` and no dust emission label
+themselves `"attenuated"`; that is the usual culprit. `TotalEmission` is
+**not** — it defaults `label="total"` in `__new__` and keeps that key even
+when it returns an `AttenuatedEmission`. So if the traceback really came from
+a `TotalEmission`, suspect a `label=` you passed, a different model than you
+think, or reading the wrong `spectra` dict (`galaxy.spectra` versus
+`galaxy.stars.spectra` — see `emitter-galaxy.md`). Print `model.label` and
+`sorted(component.spectra)` before theorising.
 
 **A label you did not ask for, or a missing one** — eight premade names are
 `__new__` factories returning a different concrete class per argument set, so
@@ -75,6 +80,10 @@ models build their children and prefix the labels with an underscore.
 
 **A component is zero** — check the model's mask before suspecting the grid.
 Masks silently yield zero when nothing meets the threshold.
+
+**`AttributeError: 'Sed' object has no attribute 'label'`** — a `Sed` carries
+no label. The label is the **key** in `component.spectra`, not a property of
+the spectrum. Keep the key if you need it.
 
 **`tau_v` or `fesc` ignored** — these default to a *string* naming an attribute
 of the emitter, not a value. Pass a number for a fixed screen. See

@@ -77,6 +77,10 @@ plain stellar ladder above alongside genuine subclasses.
 `EmergentEmission` and `ReprocessedEmission` are ordinary subclasses and behave
 as you would expect.
 
+Because these are `__new__` factories their `__init__` is `(*args, **kwargs)`.
+`inspect_synthesizer_api` sees through that and reports the real `__new__`
+parameters, including the `label` default that decides the output key.
+
 Consequences:
 
 - `isinstance(model, TotalEmission)` is not a reliable check.
@@ -85,11 +89,14 @@ Consequences:
 - The set of labels the model produces changes with the arguments. With
   `fesc=0`, `IntrinsicEmission` returns a `ReprocessedEmission` — and its label
   is `_intrinsic_reprocessed`, not `intrinsic` and not `reprocessed`.
-- The label can differ from the model's name. With `fesc=0`/`None` and no dust
-  emission model, `TotalEmission` returns an `AttenuatedEmission` labelled
-  **`"attenuated"`**, and `PacmanEmission` labels itself `"attenuated"` too — so
-  `spectra["total"]` raises `KeyError`. Pass `label="total"` if that is the key
-  you want.
+- **The concrete class changing does not mean the label changes.** Verified
+  against 1.2.1.dev: `TotalEmission(grid, dust_curve, tau_v=..., fesc=0)`
+  returns an `AttenuatedEmission` **still labelled `"total"`**, because
+  `TotalEmission.__new__` defaults `label="total"`. `spectra["total"]` works.
+  `PacmanEmission` and `ScreenEmission` default `label=None` and compute one
+  instead: with `fesc=0` and no dust emission they label themselves
+  **`"attenuated"`**, and `spectra["total"]` raises `KeyError`. Do not assume
+  which case you are in — read `model.label`, or pass `label=` explicitly.
 - Models produce labels you did not ask for. `ReprocessedEmission(grid)` also
   yields an **`escaped`** label, because the `TransmittedEmission` factory
   underneath it splits off the escaped component at the default `fesc`. Read

@@ -38,9 +38,12 @@ factory arguments can change both network and root label. Inspect `model.label`,
 
 `TotalEmission`, `IntrinsicEmission`, `TransmittedEmission`, `ScreenEmission`,
 `CharlotFall2000`, `PacmanEmission`, and `BimodalPacmanEmission` can return a
-different concrete model from the class called. For example, without a dust
-generator and with no escaped component, a nominal total model can be labelled
-`attenuated`. Pass `label=` when a stable output key matters.
+different concrete model from the class called. The returned class and the
+output label move independently: with `fesc=0` and no dust generator,
+`PacmanEmission` and `ScreenEmission` label themselves `attenuated`, while
+`TotalEmission` returns an `AttenuatedEmission` that is still labelled
+`total`, and `IntrinsicEmission` is labelled `_intrinsic_reprocessed`. Read
+`model.label`, or pass `label=` when a stable output key matters.
 
 ## AGN models
 

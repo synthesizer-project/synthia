@@ -98,7 +98,10 @@ from the user's data and state the inference explicitly.
    Sersic profile) → parametric. See `references/particle.md` and
    `references/parametric.md`.
 2. **Which emitters?** Stars only, or stars plus black holes (and gas as an
-   attenuating medium)?
+   attenuating medium)? Each emitter carries its own parameter surface, and
+   emission models read their parameters off it: see
+   `references/emitter-stars.md`, `references/emitter-blackholes.md`,
+   `references/emitter-gas.md` and `references/emitter-galaxy.md`.
 3. **Which emission is wanted?** `incident`, `transmitted`, `nebular`,
    `intrinsic`, `emergent`, `attenuated`, `total` — these are specific,
    different things, not synonyms. See `references/emission-models.md`.
@@ -119,6 +122,10 @@ from the user's data and state the inference explicitly.
 | Which grids do I have? Where do they live? | `references/units-and-data.md` | `list_local_grids` |
 | Does this grid have that axis / line / spectrum? | `references/units-and-data.md` | `inspect_local_grid` |
 | Simulation particle data → observables | `references/particle.md` | `find_example` |
+| What does a Galaxy hold, component vs galaxy spectra | `references/emitter-galaxy.md` | `inspect_synthesizer_api` |
+| Stellar emitter attributes, weighted ages, per-particle `tau_v` | `references/emitter-stars.md` | `inspect_synthesizer_api` |
+| AGN / black hole properties, `UnifiedAGN`, torus, NLR/BLR | `references/emitter-blackholes.md` | `inspect_synthesizer_api` |
+| Gas, dust masses, line-of-sight optical depths | `references/emitter-gas.md` | `inspect_synthesizer_api` |
 | SFH / ZDist / morphology models | `references/parametric.md` | `find_example` |
 | Many galaxies with one model | `references/pipeline.md` | `find_example` |
 | Choosing a premade emission model | `references/premade-emission-models.md` | `inspect_synthesizer_api` |
@@ -208,6 +215,12 @@ it. See `references/units-and-data.md`.
 
 - `references/concepts.md` — the pipeline, vocabulary, and how the pieces fit.
 - `references/particle.md` — simulation particle workflows.
+- `references/emitter-galaxy.md` — the `Galaxy` container, components, and
+  which `spectra` dict an emission model fills.
+- `references/emitter-stars.md` — the stellar emitter's attribute surface.
+- `references/emitter-blackholes.md` — black hole properties and the AGN
+  parameter surface, including `UnifiedAGN`'s required grids.
+- `references/emitter-gas.md` — gas as an attenuating medium.
 - `references/parametric.md` — analytic SFH/ZDist/morphology workflows.
 - `references/pipeline.md` — batched galaxies, lazy operations and result layout.
 - `references/emission-models.md` — emission model composition and dust.
