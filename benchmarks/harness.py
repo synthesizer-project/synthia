@@ -51,6 +51,48 @@ def _ignore_non_source(directory: str, names: list[str]) -> list[str]:
     return ignored
 
 
+#: Keys copied from the developer's ``~/.claude.json`` into each run's
+#: throwaway one. Authentication and onboarding state only: enough for the
+#: CLI to start without a login prompt, and nothing that steers the agent.
+#: Notably excluded is ``projects``, which carries per-directory history.
+_AUTH_KEYS = (
+    "oauthAccount",
+    "userID",
+    "hasCompletedOnboarding",
+    "lastOnboardingVersion",
+    "firstStartTime",
+    "claudeCodeFirstTokenDate",
+    "hasAvailableSubscription",
+)
+
+
+def _isolated_home(workdir: Path) -> Path:
+    """Build a throwaway ``HOME`` that authenticates but carries no config.
+
+    Args:
+        workdir: The run directory to place the home inside.
+
+    Returns:
+        Path to the new home directory.
+    """
+    home = workdir / "home"
+    home.mkdir(exist_ok=True)
+    source = Path.home() / ".claude.json"
+    carried = {}
+    if source.is_file():
+        try:
+            stored = json.loads(source.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            stored = {}
+        carried = {
+            key: stored[key] for key in _AUTH_KEYS if key in stored
+        }
+    (home / ".claude.json").write_text(
+        json.dumps(carried), encoding="utf-8"
+    )
+    return home
+
+
 def _write_mcp_config(
     directory: Path, arm: str, server: Path, backend: str
 ) -> Path:
@@ -411,9 +453,8 @@ def run_case(
         # and change how the agent explores. Credentials live in the OS
         # keychain, so authentication survives the swap.
         run_env = dict(env or {})
-        home = workdir / "home"
+        home = _isolated_home(workdir)
         config_home = workdir / "config"
-        home.mkdir(exist_ok=True)
         config_home.mkdir(exist_ok=True)
         run_env.update(
             {

@@ -148,6 +148,39 @@ def _safe(extract):
         return None
 
 
+def _signature(obj: object) -> str:
+    """Return a useful signature, seeing through ``__new__`` factories.
+
+    Eight premade emission models (``UnifiedAGN``, ``TotalEmission``,
+    ``PacmanEmission`` and friends) build themselves in ``__new__`` and
+    inherit an uninformative ``(*args, **kwargs)`` ``__init__``. Reporting
+    that tells the caller nothing and sends them into the source, so fall
+    back to ``__new__`` when it is the more specific of the two.
+
+    Args:
+        obj: The already-resolved object to describe.
+
+    Returns:
+        The signature, annotated when it came from ``__new__``.
+    """
+    rendered = str(inspect.signature(obj))
+    if not isinstance(obj, type) or rendered not in {
+        "(*args, **kwargs)",
+        "(*args, **kwds)",
+    }:
+        return rendered
+    factory = inspect.getattr_static(obj, "__new__", None)
+    if factory is None:
+        return rendered
+    try:
+        from_new = str(inspect.signature(factory))
+    except (TypeError, ValueError):
+        return rendered
+    if from_new in {"(*args, **kwargs)", "(*args, **kwds)"}:
+        return rendered
+    return f"{from_new}  # from __new__; cls is not passed by the caller"
+
+
 def _text_attr(obj: object, name: str) -> str | None:
     """Read a string metadata attribute, or None if it is not one.
 
@@ -420,7 +453,7 @@ def inspect_synthesizer_api(dotted_name: str) -> dict[str, object]:
         # Synthesizer's unit decorators set __wrapped__, so following
         # it is what recovers the real parameters. It is a plain
         # attribute read on an already-verified object.
-        "signature": _safe(lambda: str(inspect.signature(obj))),
+        "signature": _safe(lambda: _signature(obj)),
         "doc": untrusted(doc, ".".join(segments)) if doc else None,
         "source": _safe(lambda: _source_location(obj)),
         "version": synthesizer_version,
