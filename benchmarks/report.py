@@ -42,13 +42,23 @@ def _case_medians(records: list[dict], cases: list[str], field: str) -> dict:
     return values
 
 
-def _bars(axis, records, cases, field, label):
-    """Draw one horizontal grouped-bar panel."""
+def _column(axis, records, cases, field, label, unit, show_labels):
+    """Draw one metric as a column of paired horizontal bars.
+
+    Args:
+        axis: Target axes.
+        records: Graded records.
+        cases: Case names, in plot order.
+        field: Record field to plot.
+        label: Short column heading.
+        unit: Callable rendering an axis tick.
+        show_labels: Whether to draw the shared case labels.
+    """
     import numpy
     from matplotlib.ticker import FuncFormatter
 
     positions = numpy.arange(len(cases))
-    height = 0.36
+    height = 0.38
     values = _case_medians(records, cases, field)
     for index, arm in enumerate(ARMS):
         axis.barh(
@@ -61,29 +71,25 @@ def _bars(axis, records, cases, field, label):
     baseline = sum(values["baseline"])
     synthia = sum(values["synthia"])
     change = 100 * (synthia / baseline - 1) if baseline else 0
-    direction = "less" if change < 0 else "more"
     axis.set_title(
-        f"{label}  |  Synthia: {abs(change):.0f}% {direction}",
+        f"{label}   {change:+.0f}%",
         loc="left",
-        fontsize=11,
+        fontsize=9.5,
         fontweight="bold",
+        pad=6,
     )
     axis.set_yticks(positions)
-    axis.set_yticklabels([case.replace("-", " ") for case in cases])
+    if show_labels:
+        axis.set_yticklabels(
+            [case.replace("-", " ") for case in cases], fontsize=8.5
+        )
     axis.invert_yaxis()
-    axis.grid(axis="x", color="#dfe3e6", linewidth=0.8)
+    axis.grid(axis="x", color="#e3e6e9", linewidth=0.6)
     axis.set_axisbelow(True)
     axis.spines[["top", "right", "left"]].set_visible(False)
     axis.tick_params(axis="y", length=0)
-    axis.ticklabel_format(axis="x", style="plain")
-    if field == "exploration_bytes":
-        axis.xaxis.set_major_formatter(
-            FuncFormatter(lambda value, _: f"{value / 1000:g}k")
-        )
-    elif field == "cost_usd":
-        axis.xaxis.set_major_formatter(
-            FuncFormatter(lambda value, _: f"${value:.2f}")
-        )
+    axis.tick_params(axis="x", labelsize=8)
+    axis.xaxis.set_major_formatter(FuncFormatter(unit))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -112,51 +118,35 @@ def main(argv: list[str] | None = None) -> int:
         if record["arm"] == "baseline" and record["repeat"] == 0
     ]
 
+    # One row, shared case labels: three stacked panels repeated the same
+    # fifteen labels and did not fit a README column.
     panels = [
-        ("cost_usd", "Cost (USD, cache-aware)"),
-        ("wall_seconds", "Wall time (seconds)"),
-        ("exploration_bytes", "Unstructured exploration (bytes)"),
+        ("cost_usd", "Cost (USD)", lambda v, _: f"{v:.1f}"),
+        ("wall_seconds", "Wall time (s)", lambda v, _: f"{v:.0f}"),
+        (
+            "exploration_bytes",
+            "Source read (kB)",
+            lambda v, _: f"{v / 1000:.0f}",
+        ),
     ]
     figure, axes = pyplot.subplots(
-        len(panels), 1, figsize=(10, 13), sharey=True
+        1, len(panels), figsize=(9.5, 4.2), sharey=True
     )
-    for axis, (field, label) in zip(axes, panels):
-        _bars(axis, records, cases, field, label)
-    axes[0].legend(
-        loc="lower right", frameon=False, ncols=2, fontsize=10
+    for index, (axis, (field, label, unit)) in enumerate(zip(axes, panels)):
+        _column(axis, records, cases, field, label, unit, index == 0)
+    handles, labels = axes[0].get_legend_handles_labels()
+    # A legend inside a panel lands on top of the longest bars.
+    figure.legend(
+        handles,
+        labels,
+        loc="lower center",
+        ncols=2,
+        frameon=False,
+        fontsize=9,
+        handlelength=1.4,
+        bbox_to_anchor=(0.5, 0.0),
     )
-    completed = {
-        arm: sum(
-            int(bool(record.get("script_runs")))
-            for record in records
-            if record["arm"] == arm
-        )
-        for arm in ARMS
-    }
-    totals = {
-        arm: sum(record["arm"] == arm for record in records) for arm in ARMS
-    }
-    figure.suptitle(
-        "Targeted retrieval replaces source-code archaeology",
-        x=0.08,
-        y=0.995,
-        ha="left",
-        fontsize=17,
-        fontweight="bold",
-    )
-    figure.text(
-        0.08,
-        0.968,
-        "Same tasks, model, and environment. Bars show median per case. "
-        f"Runnable scripts: baseline {completed['baseline']}/"
-        f"{totals['baseline']}, Synthia {completed['synthia']}/"
-        f"{totals['synthia']}.",
-        color="#555b61",
-        fontsize=10,
-    )
-    figure.subplots_adjust(
-        left=0.24, right=0.97, top=0.945, bottom=0.05, hspace=0.28
-    )
+    figure.tight_layout(pad=0.6, rect=(0, 0.045, 1, 1))
 
     out = (
         Path(args.out) if args.out else Path(args.results).with_suffix(".png")

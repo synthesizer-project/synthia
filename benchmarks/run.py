@@ -163,9 +163,9 @@ def main(argv: list[str] | None = None) -> int:
         if grid_probe.returncode:
             print(grid_probe.stderr.strip(), file=sys.stderr)
             return 1
-        env["SYNTHESIZER_GRID_DIR"] = (
-            grid_probe.stdout.strip().splitlines()[-1]
-        )
+        env["SYNTHESIZER_GRID_DIR"] = grid_probe.stdout.strip().splitlines()[
+            -1
+        ]
 
     if args.preflight_only and args.skip_preflight:
         parser.error("--preflight-only conflicts with --skip-preflight")

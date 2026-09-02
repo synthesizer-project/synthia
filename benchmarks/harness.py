@@ -302,14 +302,10 @@ def _accumulate(
             name = str(block.get("name", ""))
             seen[block.get("id")] = (name, block.get("input", {}))
         elif kind == "user" and block.get("type") == "tool_result":
-            name, tool_input = seen.get(
-                block.get("tool_use_id"), ("", {})
-            )
+            name, tool_input = seen.get(block.get("tool_use_id"), ("", {}))
             output = block.get("content", "")
             size = len(json.dumps(output))
-            category = _record_tool(
-                trace, name, tool_input, output, workdir
-            )
+            category = _record_tool(trace, name, tool_input, output, workdir)
             if category == "synthia":
                 totals["synthia_tool_calls"] += 1
                 totals["synthia_tool_bytes"] += size

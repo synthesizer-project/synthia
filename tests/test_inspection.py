@@ -309,4 +309,3 @@ def test_an_oversized_value_is_truncated():
     assert rendered is not None
     assert rendered.endswith("(truncated)")
     assert len(rendered) <= inspection.MAX_VALUE_CHARS + 32
-

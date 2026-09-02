@@ -380,4 +380,3 @@ def test_available_section_propagates_truncation():
 def test_available_section_survives_a_missing_structure():
     """A grid whose structure could not be read must not raise."""
     assert grids._catalogue({}) == {}
-
