@@ -17,9 +17,13 @@ for the user; do not merely describe the commands.
 2. Install Synthia and run its idempotent setup command:
 
    ```bash
-   python -m pip install 'git+https://github.com/synthesizer-project/synthia.git'
+   python -m pip install cosmos-synthia
    synthia-install
    ```
+
+   The distribution is named `cosmos-synthia`; the import name is `synthia`.
+   Install from `git+https://github.com/synthesizer-project/synthia.git`
+   instead only if the user asks for an unreleased change.
 
 3. Report the environment and server paths printed by `synthia-install`, plus
    any warnings or refusals. Do not use `--force` without asking the user: it

@@ -18,14 +18,20 @@ Synthia requires Synthesizer to be installed first. You'll need to install Synth
 For agent-assisted installation, send your coding agent this prompt:
 
 ```text
-Read <https://raw.githubusercontent.com/synthesizer-project/synthia/main/INSTALL.md and install Synthia for me.
+Read https://raw.githubusercontent.com/synthesizer-project/synthia/main/INSTALL.md and install Synthia for me.
 ```
 
 Or install it directly (which is essentially all the install prompt does):
 
 ```bash
-pip install 'git+https://github.com/synthesizer-project/synthia.git'
+pip install cosmos-synthia
 synthia-install
+```
+
+To install an unreleased change, point pip at the repository instead:
+
+```bash
+pip install 'git+https://github.com/synthesizer-project/synthia.git'
 ```
 
 ### In case you care what the install does...
@@ -65,7 +71,7 @@ Synthia is at its most useful where an answer depends on your specific installat
 
 ## Performance
 
-The benchmarks directory contains a series of 30 tests for common Synthia prompts. These were run on a bare agent (i.e. no plugins, MCPs, or skills) using Sonnet 5 with and without Synthia. Below is a comparison of the usage and runtime.
+The benchmarks directory contains a series of 15 tests for common Synthia prompts. These were run on a bare agent (i.e. no plugins, MCPs, or skills) using Sonnet 5 with and without Synthia. Below is a comparison of the usage and runtime.
 
 | metric            | baseline | synthia | change |
 | ----------------- | -------- | ------- | ------ |
@@ -75,12 +81,12 @@ The benchmarks directory contains a series of 30 tests for common Synthia prompt
 | cache-read tokens | 21.5 M   | 14.9 M  | −31%   |
 | turns             | 443      | 341     | −23%   |
 
-Note that all baseline and Synthia prompts produced runnable and/or "correct" outputs.
+Note that every Synthia script produced a correct result or a runnable script while baseline did in all but one case. Synthia is designed to be correct more often but importantly it'll get to the correct answer with less resource and often faster.
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development workflow.
+See [CONTRIBUTING.md](https://github.com/synthesizer-project/synthia/blob/main/CONTRIBUTING.md) for the full development workflow.
 
 ## Licence
 
-[GNU General Public License v3.0](LICENSE).
+[GNU General Public License v3.0](https://github.com/synthesizer-project/synthia/blob/main/LICENSE).
