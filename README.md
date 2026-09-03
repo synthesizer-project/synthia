@@ -67,15 +67,15 @@ Synthia is at its most useful where an answer depends on your specific installat
 
 The benchmarks directory contains a series of 30 tests for common Synthia prompts. These were run on a bare agent (i.e. no plugins, MCPs, or skills) using Sonnet 5 with and without Synthia. Below is a comparison of the usage and runtime.
 
-| metric | baseline | synthia | change |
-|---|---|---|---|
-| total cost | $11.30 | $8.22 | −27% |
-| total wall time | 3682 s | 2174 s | −41% |
-| source read | 954 kB | 92 kB | −90% |
-| cache-read tokens | 21.5 M | 14.9 M | −31% |
-| turns | 443 | 341 | −23% |
+| metric            | baseline | synthia | change |
+| ----------------- | -------- | ------- | ------ |
+| total cost        | $11.30   | $8.22   | −27%   |
+| total wall time   | 3682 s   | 2174 s  | −41%   |
+| source read       | 954 kB   | 92 kB   | −90%   |
+| cache-read tokens | 21.5 M   | 14.9 M  | −31%   |
+| turns             | 443      | 341     | −23%   |
 
-Note that all baseline and Synthia prompts produced "correct" and/or runnable outputs. 
+Note that all baseline and Synthia prompts produced runnable and/or "correct" outputs.
 
 ## Development
 
