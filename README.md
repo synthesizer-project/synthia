@@ -51,12 +51,6 @@ claude # or opencode
 > heavy dust attenuation, and plot them.
 ```
 
-Check the wiring at any time:
-
-```text
-> Which Synthesizer is Synthia inspecting?
-```
-
 ### What sort of thing can Synthia help with?
 
 - _"Does my local grid cover the metallicity range I need, and does it contain
@@ -67,12 +61,26 @@ Check the wiring at any time:
   renders a figure and returns its path.
 - _"Adapt this script to the Synthesizer version I actually have installed."_
   — signatures come from the installed source.
-- "Generate a young and old galaxy with black holes and produce plots showing whether JWST can detect the AGN contribution for a set of reasonable redshifts and galaxy properties." — a complex astrophysics question that Synthia can help with by applying its knowledge of the local installation and available grids.
+- _"Generate a young and old galaxy with black holes and produce plots showing whether JWST can detect the AGN contribution for a set of reasonable redshifts and galaxy properties."_ — a complex astrophysics question that Synthia can help with by applying its knowledge of the local installation and available grids.
 
 Synthia is at its most useful where an answer depends on your specific
 installation: which version, which grids, which spectra those grids hold. It
 is least useful for pure astrophysics questions, which the model can answer
 without it.
+
+## Performance
+
+In the benchmarks directory is a series of 30 tests of common Synthia prompts. These were run on a bare agent (i.e. no plugins, MCPs, or skills) using Sonnet 5 with and without Synthia. Below is a comparison of the usage and runtime.
+
+| metric | baseline | synthia | change |
+|---|---|---|---|
+| total cost | $11.30 | $8.22 | −27% |
+| total wall time | 3682 s | 2174 s | −41% |
+| source read | 954 kB | 92 kB | −90% |
+| cache-read tokens | 21.5 M | 14.9 M | −31% |
+| turns | 443 | 341 | −23% |
+
+Note that all baseline and Synthia prompts produce correct outputs with similar quality. 
 
 ## Development
 
@@ -80,4 +88,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development workflow.
 
 ## Licence
 
-See [GNU General Public License v3.0](LICENSE).
+[GNU General Public License v3.0](LICENSE).
