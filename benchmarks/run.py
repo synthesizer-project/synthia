@@ -178,6 +178,16 @@ def main(argv: list[str] | None = None) -> int:
     RESULTS.mkdir(exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out = Path(args.out) if args.out else RESULTS / f"{stamp}.jsonl"
+    completed = set()
+    if out.is_file():
+        with out.open(encoding="utf-8") as handle:
+            for line in handle:
+                if line.strip():
+                    record = json.loads(line)
+                    completed.add(
+                        (record["case_id"], record["arm"], record["repeat"])
+                    )
+        print(f"resuming {out} after {len(completed)} completed runs")
 
     total = len(selected) * len(ARMS) * args.repeats
     done = 0
@@ -186,6 +196,8 @@ def main(argv: list[str] | None = None) -> int:
             for case in selected:
                 for arm in ARMS:
                     done += 1
+                    if (case["id"], arm, repeat) in completed:
+                        continue
                     label = f"[{done}/{total}] {case['name']} {arm} r{repeat}"
                     print(label, flush=True)
                     with tempfile.TemporaryDirectory(

@@ -415,6 +415,11 @@ def run_case(
             config_home = workdir / "config"
             home.mkdir(exist_ok=True)
             config_home.mkdir(exist_ok=True)
+            auth = Path.home() / ".local/share/opencode/auth.json"
+            if auth.is_file():
+                isolated_auth = home / ".local/share/opencode/auth.json"
+                isolated_auth.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(auth, isolated_auth)
             run_env.update(
                 {
                     "HOME": str(home),

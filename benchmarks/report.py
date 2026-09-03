@@ -120,8 +120,17 @@ def main(argv: list[str] | None = None) -> int:
 
     # One row, shared case labels: three stacked panels repeated the same
     # fifteen labels and did not fit a README column.
+    first_panel = (
+        ("cost_usd", "Cost (USD)", lambda v, _: f"{v:.1f}")
+        if any(record.get("cost_usd", 0) for record in records)
+        else (
+            "output_tokens",
+            "Output tokens",
+            lambda v, _: f"{v / 1000:.0f}k",
+        )
+    )
     panels = [
-        ("cost_usd", "Cost (USD)", lambda v, _: f"{v:.1f}"),
+        first_panel,
         ("wall_seconds", "Wall time (s)", lambda v, _: f"{v:.0f}"),
         (
             "exploration_bytes",
