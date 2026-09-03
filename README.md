@@ -1,6 +1,6 @@
 # Synthia
 
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/synthesizer-project/synthesizer/blob/main/docs/CONTRIBUTING.md)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/synthesizer-project/synthia/blob/main/CONTRIBUTING.md)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -10,7 +10,7 @@
 
 Synthia is an agent companion for working with [Synthesizer](https://github.com/synthesizer-project/synthesizer). 
 
-Synthia bundles an Agent Skill with a local MCP server so Claude Code, OpenCode, and other MCP-capable agents can answer Synthesizer questions from the user's actual installation rather than inflating context and relying on incomplete local memory. Note that it is not designed as a replacement for a human user but simply aims to make learning and using Synthesizer a frictionless experience.
+Synthia bundles an Agent Skill with a local MCP server so Claude Code, OpenCode, and other MCP-capable agents can answer Synthesizer questions from the user's actual installation rather than inflating context and relying on incomplete local memory. Note that it is not designed as a replacement for a human user but simply aims to make learning and using Synthesizer a frictionless experience. For more on these mechanisms see the [MCP documentation](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro) and, for Agent Skills, [agentskills.io](https://agentskills.io/home).
 
 ## Installation
 

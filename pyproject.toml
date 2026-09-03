@@ -1,20 +1,37 @@
 [build-system]
-requires = ["hatchling>=1.27"]
+requires = ["hatchling>=1.27", "hatch-vcs>=0.4"]
 build-backend = "hatchling.build"
 
 [project]
 name = "cosmos-synthia"
-version = "0.1.0.dev0"
+dynamic = ["version"]
 description = "Agent Skill and MCP tools for the Synthesizer Python package"
 readme = "README.md"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
+# Project keywords, following Synthesizer's list where they apply
+keywords = [
+    "galaxy",
+    "modelling",
+    "galaxy formation",
+    "galaxy evolution",
+    "parametric",
+    "theory",
+    "cosmology",
+    "SED",
+    "sed",
+    "synthetic observations",
+    "agent",
+    "agent skill",
+    "MCP",
+    "LLM",
+]
 authors = [
     {name = "W. J. Roper", email = "w.roper@sussex.ac.uk"},
 ]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Astronomy",
     "Programming Language :: Python :: 3.10",
@@ -24,7 +41,7 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
-    "mcp>=2,<3",
+    "mcp>=2",
 ]
 
 [project.optional-dependencies]
@@ -36,16 +53,25 @@ test = [
     "pytest>=8",
     "ruff==0.15.15",
 ]
-docs = [
-    "furo",
-    "sphinx==7.4.7",
-    "sphinx-autodoc-typehints<3",
-    "sphinx-copybutton",
-]
+
+[project.urls]
+Homepage = "https://github.com/synthesizer-project/synthia"
+Repository = "https://github.com/synthesizer-project/synthia"
+Issues = "https://github.com/synthesizer-project/synthia/issues"
 
 [project.scripts]
 synthia-mcp = "synthia.server:main"
 synthia-install = "synthia.install:main"
+
+# The version comes from the git tag, so a release needs no source edit
+# and the tag can never disagree with the published metadata.
+[tool.hatch.version]
+source = "vcs"
+
+# Make a version file at build time, mirroring Synthesizer's
+# setuptools_scm version_file. Not tracked in version control.
+[tool.hatch.build.hooks.vcs]
+version-file = "src/synthia/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/synthia"]

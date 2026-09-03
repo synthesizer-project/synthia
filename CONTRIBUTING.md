@@ -7,9 +7,13 @@ Synthia follows Synthesizer's development and documentation standards.
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev,test,docs]'
+python -m pip install -e '.[dev,test]'
 pre-commit install
 ```
+
+Install both extras, not just `dev`. They are deliberately separate: `dev`
+carries the linters and `pre-commit`, `test` carries `pytest`. `pip install
+-e '.[dev]'` alone leaves you without a test runner.
 
 ## Required Checks
 
@@ -17,12 +21,7 @@ pre-commit install
 ruff check .
 ruff format --check .
 pytest
-make -C docs clean
-make -C docs html SPHINXOPTS="-W --keep-going"
 ```
-
-The docs build runs `python -m sphinx`, so it uses whichever interpreter is
-active; activate the development environment first.
 
 Most Synthesizer-specific tests skip when `cosmos-synthesizer` is not
 importable. Run the suite a second time in an environment that has it, as CI
@@ -46,10 +45,10 @@ checks together. CI runs the same checks, plus a wheel build.
 
 ## Documentation
 
-User-facing behaviour must be documented under `docs/source`, which is the
-single source of truth for tool contracts and installation. `PLAN.md` records
-design intent and open work only; do not restate tool behaviour there. Build
-Sphinx with warnings treated as errors before submitting changes.
+Synthia has no separate documentation site. `README.md` is the single source
+of truth for installation, tool behaviour and usage — update it in the same
+change that alters any of them. `PLAN.md` records design intent and open work
+only; do not restate tool behaviour there.
 
 Bundled skill references and examples are product behaviour. Keep them concise,
 version-aware, and tested where executable.
