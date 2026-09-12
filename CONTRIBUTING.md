@@ -35,6 +35,13 @@ pytest -q                     # Synthesizer absent
 `pre-commit run --all-files` runs repository hygiene, linting, and formatting
 checks together. CI runs the same checks, plus a wheel build.
 
+**No test may touch the network.** The catalogue tools call a live service, so
+their tests stub `urllib.request.urlopen` and assert on the urls that would
+have been requested; `tests/test_catalogue.py` shows the pattern. The
+server-level tests that call every tool for real deliberately exclude the
+catalogue tools for the same reason. A suite that reaches the internet fails
+offline, fails in CI sandboxes, and turns an upstream outage into a red build.
+
 ## Python Style
 
 - Follow PEP 8 and the repository Ruff configuration (79-character lines).
@@ -46,15 +53,28 @@ checks together. CI runs the same checks, plus a wheel build.
 ## Documentation
 
 Synthia has no separate documentation site. `README.md` is the single source
-of truth for installation, tool behaviour and usage — update it in the same
-change that alters any of them. `PLAN.md` records design intent and open work
-only; do not restate tool behaviour there.
+of truth for installation and usage — update it in the same change that alters
+either. It describes what Synthia can do, not tool by tool; do not turn it into
+an API reference.
+
+**A tool's docstring is its documentation.** The MCP server derives each tool's
+description and argument help from the Google-style docstring, so that text is
+product surface read by the agent at every call, not a developer comment. The
+`Returns:` section must describe the keys a caller actually receives, including
+the failure shape. A tool whose docstring and return value disagree is a bug.
+
+`PLAN.md` records design intent and open work only; do not restate tool
+behaviour there.
 
 Bundled skill references and examples are product behaviour. Keep them concise,
 version-aware, and tested where executable.
 
-Do not document a tool as available before it is implemented. Anything blocked
-on the remote grid catalogue service must stay explicitly marked as planned.
+Do not document a tool as available before it is implemented.
+
+The Syndex catalogue API is owned by the `syndex` repository and documented in
+its `docs/api.md`. Do not restate its response schema here; `catalogue.py`
+should degrade to a structured error when a field it expects is missing, so an
+upstream change is a gap in an answer rather than a crash.
 
 ## Packaging: the skill must reach the wheel
 
