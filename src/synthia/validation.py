@@ -372,7 +372,8 @@ def _check_grids(
                 _diagnostic(
                     "warning",
                     "missing-grid",
-                    f"Grid {name!r} is not among the local grids.",
+                    f"Grid {name!r} is not among the local grids. "
+                    f"search_catalogue says whether it is published.",
                     line,
                 )
             )

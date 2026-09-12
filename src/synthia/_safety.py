@@ -16,6 +16,7 @@ MAX_DOCSTRING_CHARS = 4096
 MAX_SNIPPET_CHARS = 500
 MAX_FILE_BYTES = 1024 * 1024
 MAX_EXAMPLE_BYTES = 32 * 1024
+MAX_SHORT_CHARS = 512
 
 _CONTROL = re.compile(
     r"\x1b\[[0-9;]*[A-Za-z]|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
@@ -48,6 +49,23 @@ def truncate(text: str, limit: int) -> tuple[str, bool]:
     if len(text) <= limit:
         return text, False
     return text[:limit], True
+
+
+def short_text(value: object, limit: int = MAX_SHORT_CHARS) -> str:
+    """Render an externally sourced value as short, control-free text.
+
+    Args:
+        value: Any value read out of a file or a remote response.
+        limit: Maximum number of characters to keep.
+
+    Returns:
+        The cleaned and capped textual form of ``value``, with an
+        ellipsis appended when it was capped.
+    """
+    if isinstance(value, bytes):
+        value = value.decode("utf-8", errors="replace")
+    text, was_truncated = truncate(clean_text(str(value)), limit)
+    return text + "..." if was_truncated else text
 
 
 def untrusted(

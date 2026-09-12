@@ -14,6 +14,9 @@ EXPECTED_TOOLS = {
     "inspect_synthesizer_api",
     "list_local_grids",
     "inspect_local_grid",
+    "search_catalogue",
+    "describe_catalogue_dataset",
+    "list_catalogue_releases",
     "search_documentation",
     "find_example",
     "validate_script",
@@ -22,6 +25,10 @@ EXPECTED_TOOLS = {
     "plot_grid_ionising_luminosity",
 }
 
+# The catalogue tools are absent: every call to one reaches the Syndex
+# service over the network, which these tests must not do. Their
+# shaping is covered by ``test_catalogue.py`` against a stubbed
+# transport, and the two entries below reach validation only.
 READ_ONLY_CALLS = {
     "inspect_environment": {},
     "inspect_synthesizer_api": {"dotted_name": "synthesizer.grid.Grid"},
@@ -40,6 +47,8 @@ READ_ONLY_CALLS = {
 HOSTILE_CALLS = {
     "inspect_synthesizer_api": {"dotted_name": "os.system"},
     "inspect_local_grid": {"grid_name": "../../etc/passwd"},
+    "describe_catalogue_dataset": {"name": "../../etc/passwd"},
+    "list_catalogue_releases": {"name": "a" * 5000},
     "search_documentation": {"query": "\x00" + "x" * 5000},
     "find_example": {"task": ""},
     "validate_script": {"source": "(" * 50000},

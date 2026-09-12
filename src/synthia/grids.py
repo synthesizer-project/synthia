@@ -12,7 +12,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from synthia._safety import clean_text, contained_path, describe, truncate
+from synthia._safety import contained_path, describe, short_text
 from synthia.inspection import installed_version
 
 GRID_SUFFIXES = (".hdf5", ".h5")
@@ -23,25 +23,8 @@ MAX_ATTRS_PER_NODE = 64
 MAX_ATTR_CHARS = 4096
 MAX_ATTR_BUDGET = 64 * 1024
 MAX_OMITTED = 64
-MAX_META_CHARS = 512
 MAX_ID_VALUES = 1024
 MAX_ID_DATASET = 4096
-
-
-def _text(value: object, limit: int = MAX_META_CHARS) -> str:
-    """Render a grid-derived value as short, control-free text.
-
-    Args:
-        value: Any value read out of a grid file.
-        limit: Maximum number of characters to keep.
-
-    Returns:
-        The cleaned and capped textual form of ``value``.
-    """
-    if isinstance(value, bytes):
-        value = value.decode("utf-8", errors="replace")
-    text, was_truncated = truncate(clean_text(str(value)), limit)
-    return text + "..." if was_truncated else text
 
 
 def _grid_dir() -> tuple[Path | None, str | None, dict[str, object] | None]:
@@ -121,7 +104,7 @@ def list_local_grids() -> dict[str, object]:
                     truncated = True
                     break
                 info = entry.stat(follow_symlinks=False)
-                name = _text(entry.name, MAX_NAME_CHARS)
+                name = short_text(entry.name, MAX_NAME_CHARS)
                 grids.append(
                     {
                         "name": name.rsplit(".", 1)[0],
@@ -214,7 +197,7 @@ def _omit(budget: dict[str, object], name: object) -> None:
     """
     budget["omitted_count"] += 1
     if len(budget["omitted"]) < MAX_OMITTED:
-        budget["omitted"].append(_text(name, 128))
+        budget["omitted"].append(short_text(name, 128))
 
 
 def _attr_bytes(attrs: object, name: str) -> int:
@@ -268,9 +251,9 @@ def _read_attrs(node: object, budget: dict[str, object]) -> dict[str, str]:
         if len(str(value)) > MAX_ATTR_CHARS:
             _omit(budget, name)
             continue
-        text = _text(value, min(MAX_ATTR_CHARS, budget["remaining"]))
+        text = short_text(value, min(MAX_ATTR_CHARS, budget["remaining"]))
         budget["remaining"] -= len(text)
-        attrs[_text(name, 128)] = text
+        attrs[short_text(name, 128)] = text
     return attrs
 
 
@@ -294,7 +277,7 @@ def _line_ids(node: object, path: str, entry: dict[str, object]) -> None:
         or node.dtype.kind not in "OSU"
     ):
         return
-    entry["values"] = [_text(v, 64) for v in node[:MAX_ID_VALUES]]
+    entry["values"] = [short_text(v, 64) for v in node[:MAX_ID_VALUES]]
     entry["values_truncated"] = node.size > MAX_ID_VALUES
 
 
@@ -341,8 +324,8 @@ def _structure(handle: object, h5py: object) -> dict[str, object]:
                     {
                         "path": path,
                         "kind": "external_link",
-                        "target_file": _text(link.filename, 256),
-                        "target_path": _text(link.path, 256),
+                        "target_file": short_text(link.filename, 256),
+                        "target_path": short_text(link.path, 256),
                         "followed": False,
                     }
                 )
@@ -352,7 +335,7 @@ def _structure(handle: object, h5py: object) -> dict[str, object]:
                     {
                         "path": path,
                         "kind": "soft_link",
-                        "target_path": _text(link.path, 256),
+                        "target_path": short_text(link.path, 256),
                         "followed": False,
                     }
                 )
@@ -371,7 +354,7 @@ def _structure(handle: object, h5py: object) -> dict[str, object]:
                 _line_ids(node, path, entry)
             else:
                 # A committed datatype has neither children nor a shape.
-                entry["kind"] = _text(type(node).__name__, 64).lower()
+                entry["kind"] = short_text(type(node).__name__, 64).lower()
             entry["attributes"] = _read_attrs(node, budget)
             entries.append(entry)
 
@@ -487,14 +470,14 @@ def inspect_local_grid(grid_name: str) -> dict[str, object]:
     if size_bytes is None:
         return {
             "ok": False,
-            "error": f"no grid named {_text(stem, MAX_NAME_CHARS)!r} "
+            "error": f"no grid named {short_text(stem, MAX_NAME_CHARS)!r} "
             f"in {grid_dir}",
             "grid_dir": str(grid_dir),
         }
 
     result: dict[str, object] = {
         "ok": True,
-        "grid_name": _text(stem, MAX_NAME_CHARS),
+        "grid_name": short_text(stem, MAX_NAME_CHARS),
         "path": str(path),
         "size_bytes": size_bytes,
         "synthesizer_version": version,
@@ -513,7 +496,7 @@ def inspect_local_grid(grid_name: str) -> dict[str, object]:
             for name in grid.axes
         ]
         metadata = {
-            _text(key, 128): _text(value)
+            short_text(key, 128): short_text(value)
             for key, value in (grid._model_metadata or {}).items()
         }
     except Exception as exc:
@@ -565,8 +548,8 @@ def _axis(name: str, units: object, values: object) -> dict[str, object]:
         A mapping with the axis name, units, and extent.
     """
     axis: dict[str, object] = {
-        "name": _text(name, 128),
-        "units": _text(units, 128),
+        "name": short_text(name, 128),
+        "units": short_text(units, 128),
     }
     try:
         axis["size"] = len(values)

@@ -1,7 +1,8 @@
 """Synthia MCP server.
 
 Synthia exposes a small, read-only tool surface over the user's
-installed Synthesizer. No tool executes generated code or downloads
+installed Synthesizer, plus read-only queries against the project's
+Syndex data catalogue. No tool executes generated code or downloads
 anything. The only files written are the figures the plot tools place
 in a private directory under the system temporary directory.
 ``synthia-install`` is a console script and is deliberately not
@@ -16,6 +17,11 @@ from mcp.server import MCPServer
 
 from synthia import __version__
 from synthia._safety import safe_tool
+from synthia.catalogue import (
+    describe_catalogue_dataset,
+    list_catalogue_releases,
+    search_catalogue,
+)
 from synthia.grids import inspect_local_grid, list_local_grids
 from synthia.guidance import find_example, search_documentation
 from synthia.inspection import inspect_environment, inspect_synthesizer_api
@@ -41,6 +47,9 @@ for _tool in (
     inspect_synthesizer_api,
     list_local_grids,
     inspect_local_grid,
+    search_catalogue,
+    describe_catalogue_dataset,
+    list_catalogue_releases,
     search_documentation,
     find_example,
     validate_script,
