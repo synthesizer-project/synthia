@@ -65,7 +65,7 @@ Metallicity: `DeltaConstant` fixes a single value — pass **either**
 a mean with a sigma.
 
 Every age argument needs time units. A bare number is a silent error of the
-kind described in `units-and-data.md`, not an exception.
+kind described in `units.md`, not an exception.
 
 ## The SFZH
 

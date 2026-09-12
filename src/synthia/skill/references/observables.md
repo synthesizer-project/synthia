@@ -39,6 +39,7 @@ luminosities. Do not compute fluxes just because a filter is involved.
 Only the SVO route needs the network. Premade instruments are **also** not
 offline — `JWSTNIRCam()` and friends raise `MissingInstrumentFile` without a
 downloaded instrument cache, so never build a reproducible script on them.
+Getting that cache is below, and it is not a `--dataset` download.
 `examples/photometry.py` shows the offline alternatives.
 
 Filters and the spectra they are applied to must share a wavelength grid;
@@ -67,6 +68,33 @@ editor autocomplete cannot see them. The runtime enumeration is
 `AVAILABLE_INSTRUMENTS`, and there is a helper that prints them. If a premade
 instrument name seems to be missing, check that list before concluding it does
 not exist. Premade instruments pull their filter data on first use and cache it.
+
+### Getting an instrument onto the machine
+
+`MissingInstrumentFile` means the instrument cache does not hold that file.
+The published instruments are in the Syndex catalogue —
+`search_catalogue(data_type="instrument")` lists them, and
+`describe_catalogue_dataset` reports an instrument's filter codes, wavelength
+coverage, resolution and capabilities before anything is fetched.
+
+**Install them with `--instruments`, never with `--dataset`:**
+
+```bash
+synthesizer-download --instruments EuclidNISP
+```
+
+`--dataset` installs into the **grid** directory, where the instrument loader
+never looks, and nothing raises — the next run fails with the same
+`MissingInstrumentFile` it started with. The catalogue tools return
+`download_command: null` plus a `download_note` for instruments precisely so
+that command is never offered.
+
+One instrument has **three** spellings: the catalogue name
+(`euclid-nisp-instrument`), the catalogue label (`Euclid.NISP`), and the
+downloader name (`EuclidNISP`). Only the last works with `--instruments`, and
+it comes from `AVAILABLE_INSTRUMENTS` — enumerate it with
+`inspect_synthesizer_api`, never convert between the spellings by hand.
+See `data-catalogue.md`.
 
 ## Photometry
 

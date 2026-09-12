@@ -11,15 +11,15 @@ The strings users paste in, and what they usually mean:
 
 | exception | usual cause | see |
 |---|---|---|
-| `MissingUnits` | a bare array passed to an `@accepts` constructor; the message names the **parameter's** expected unit, not the storage default | `units-and-data.md` |
+| `MissingUnits` | a bare array passed to an `@accepts` constructor; the message names the **parameter's** expected unit, not the storage default | `units.md` |
 | `InconsistentArguments` | mixing particle and parametric objects, or a bad `Instrument`/`Galaxy` argument combination | `parametric.md`, `observables.md` |
 | `MissingLines` | an alias *string* like `"Hb"` passed to `get_lines`; it needs the full id | below |
-| `MissingSpectraType` | the grid does not have that spectrum — often because it was loaded with `ignore_spectra=True` | `units-and-data.md` |
+| `MissingSpectraType` | the grid does not have that spectrum — often because it was loaded with `ignore_spectra=True` | `local-grids.md` |
 | `UnimplementedFunctionality` | `emitter="gas"`, or `CoordinateGenerator.generate_2D_Sersic` / `generate_3D_spline` | `emission-models.md` |
-| `UnrecognisedOption` | `.shape` on a grid loaded with both `ignore_*` flags | `units-and-data.md` |
-| `MissingInstrumentFile` | a premade instrument (`JWSTNIRCam()`) with no downloaded instrument cache | `observables.md` |
+| `UnrecognisedOption` | `.shape` on a grid loaded with both `ignore_*` flags | `local-grids.md` |
+| `MissingInstrumentFile` | a premade instrument (`JWSTNIRCam()`) with no downloaded instrument cache; fetch it with `synthesizer-download --instruments <Name>`, **not** `--dataset` | `observables.md` |
 | `InconsistentAddition` | adding images whose resolution or FOV differ | `observables.md` |
-| `PackageNotFoundError` | `importlib.metadata.version("synthesizer")` — the distribution is `cosmos-synthesizer` | `units-and-data.md` |
+| `PackageNotFoundError` | `importlib.metadata.version("synthesizer")` — the distribution is `cosmos-synthesizer` | `local-grids.md` |
 
 ## Imports
 
@@ -94,7 +94,13 @@ of the emitter, not a value. Pass a number for a fixed screen. See
 **File not found, naming a doubled extension like `..._grid.h5.hdf5`** — only
 `.hdf5` is stripped from the name. `"test_grid"` and `"test_grid.hdf5"` are both
 fine; `.h5` is not. Do not "fix" working code that passes `.hdf5`. See
-`units-and-data.md`.
+`local-grids.md`.
+
+**The grid the user needs is not in the grid directory** — `list_local_grids`
+reports what is installed, not what exists. Search the catalogue with
+`search_catalogue`, confirm the contents with `describe_catalogue_dataset`, and
+propose the `synthesizer-download` command it returns. See
+`data-catalogue.md`.
 
 **A grid appears to have no lines or no spectra, or `.shape` raises** — it was
 loaded with `ignore_spectra=True, ignore_lines=True`. Those flags skip loading;
@@ -126,13 +132,13 @@ needs `get_fnu`. There is no `get_line_luminosities` method.
 *assigned* to a `Quantity` attribute after construction, so it was taken to be
 in the category default already (`ages = 10` means ten **years**). Constructors
 decorated with `@accepts` would have raised `MissingUnits`; assignment does not.
-See `units-and-data.md`.
+See `units.md`.
 
 **`obj._attr` does not match what was passed in** — it never will in general;
 it is the converted value with units stripped.
 
 **Changing `Units` had no effect** — it is a singleton, and changes do not
-retroactively convert existing objects. See `units-and-data.md`.
+retroactively convert existing objects. See `units.md`.
 
 **Edited the units YAML and nothing changed** — the effective file is the user's
 `BASE_DIR/default_units.yml`, not the package copy.
