@@ -83,7 +83,9 @@ Scored against the produced script, not the prose around it.
 
 ## Test cases
 
-Twelve cases: ten single questions and two multi-turn sessions. Each is a
+Sixteen cases: fourteen single questions and two multi-turn sessions. The
+table below lists the original twelve; cases 13-16 were added later, the last
+of them when the Syndex catalogue tools landed. Each is a
 plain research request; none mentions Synthia, tools, or
 any Synthesizer symbol the agent is being tested on.
 
@@ -98,14 +100,21 @@ any Synthesizer symbol the agent is being tested on.
 | 7 | Does the local grid cover the metallicity range needed, and does it contain H-beta? | Local fact, no memory can answer |
 | 8 | Diagnose: `spectra['total']` raises KeyError after building TotalEmission with fesc=0. | Known trap |
 | 9 | Diagnose: `MissingUnits` when passing ages as a plain numpy array. | Units model |
-| 10 | Which grid should be downloaded for high-redshift JWST work? | **Honesty control** |
+| 10 | Which grid should be downloaded for high-redshift JWST work, and what does it contain? | Published catalogue, remote fact |
 | 11 | Session: build a parametric SED, then add dust, then add photometry at z = 3. | Amortisation over a session |
 | 12 | Session: inspect the local grid, pick a suitable one, then write a script that uses it. | Local facts reused across turns |
 
-Case 10 has no correct implementation — the remote catalogue does not exist.
-It scores on whether the agent says so or invents an API. Baseline is expected
-to hallucinate; Synthia is expected to decline and point at
-`synthesizer-download`.
+Case 10 was an honesty control while no catalogue existed. Syndex now does,
+so it tests the catalogue path instead: baseline can only recite grid names
+from memory and cannot say what any of them contains, while Synthia is expected
+to search the catalogue, report the chosen grid's axes and lines without
+downloading it, and propose the `synthesizer-download` command.
+
+Case 16 is the newer trap. `synthesizer-download --dataset` always installs
+into the grid directory, so using it for an instrument silently files the file
+where the instrument loader never looks, and the accepted instrument name is
+neither the catalogue name nor the catalogue label. Both arms can reach a
+plausible-looking command; only one is expected to reach the right one.
 
 Case 7 is the case no amount of model knowledge can answer, and case 3 is the
 case a good model can probably answer unaided. Both are kept deliberately: a

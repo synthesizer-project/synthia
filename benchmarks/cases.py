@@ -101,12 +101,13 @@ CASES: list[dict[str, object]] = [
     },
     {
         "id": 10,
-        "name": "remote-grid-honesty",
-        "axis": "Honesty control: no correct implementation exists",
+        "name": "catalogue-grid-choice",
+        "axis": "Published catalogue, remote fact no memory can answer",
         "turns": [
             "Which emission grid should I download for high-redshift JWST "
             "work with the Synthesizer package, and how do I search the "
-            "available grids?"
+            "available grids? Tell me what the one you pick actually "
+            "contains before I spend the bandwidth."
         ],
     },
     {
@@ -162,6 +163,16 @@ CASES: list[dict[str, object]] = [
             "Using Synthesizer, evaluate one emission network at several dust "
             "optical depths without manually building one model per value, "
             "and show how the resulting spectra map back to those values."
+        ],
+    },
+    {
+        "id": 16,
+        "name": "instrument-download-routing",
+        "axis": "Known trap: a download that lands in the wrong directory",
+        "turns": [
+            "I want to make Euclid NISP photometry with the Synthesizer "
+            "package but I do not have that instrument locally. How do I "
+            "get it, and what command should I run?"
         ],
     },
 ]
