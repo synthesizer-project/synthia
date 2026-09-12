@@ -12,7 +12,7 @@
 
 Synthia is an agent companion for working with [Synthesizer](https://github.com/synthesizer-project/synthesizer).
 
-Synthia bundles an Agent Skill with a local MCP server so Claude Code, OpenCode, and other MCP-capable agents can answer Synthesizer questions from the user's actual installation rather than inflating context and relying on incomplete local memory. Note that it is not designed as a replacement for a human user but simply aims to make learning and using Synthesizer a frictionless experience. For more on these mechanisms see the [MCP documentation](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro) and, for Agent Skills, [agentskills.io](https://agentskills.io/home).
+Synthia bundles an Agent Skill with a local MCP server so Claude Code, OpenCode, and other MCP-capable agents can answer Synthesizer questions from the user's actual installation, and from the project's [Syndex data catalogue](https://synthesizer-project.org/syndex), rather than inflating context and relying on incomplete local memory. Note that it is not designed as a replacement for a human user but simply aims to make learning and using Synthesizer a frictionless experience. For more on these mechanisms see the [MCP documentation](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro) and, for Agent Skills, [agentskills.io](https://agentskills.io/home).
 
 ## Installation
 
@@ -50,7 +50,8 @@ per session, but MCP servers only load at client start.
 
 Synthia has no interface of its own. Once installed, ask your agent about
 Synthesizer in plain language: the skill triggers on the subject matter, and
-the agent calls the MCP tools when it needs an exact local fact or a support operation.
+the agent calls the MCP tools when it needs an exact local fact, a published
+catalogue record, or a support operation.
 
 ```bash
 cd ~/my-analysis
@@ -65,16 +66,19 @@ claude # or opencode
 ### What sort of thing can Synthia help with?
 
 - _"Do any of my local grids cover the metallicity range I need, and do they contain H-beta?"_ — answered from the actual grid files you have, not from memory and without delving into the online documentation.
+- _"Is there a published BPASS grid with emission lines, and does it reach Z = 1e-5?"_ — answered from the [Syndex catalogue](https://synthesizer-project.org/syndex), including axes, spectra, lines, size, checksum and citations, without downloading the file. Synthia then hands you the `synthesizer-download` command to run yourself.
 - _"Why is `spectra['total']` a KeyError after I built a TotalEmission model with fesc=0?"_ — a documented Synthesizer emission model initialisation trap.
 - _"Show me what my BPASS v2.2.1 grid's spectra look like at 10 Myr and Z=0.01."_ — renders a figure with known plotting methods and returns its path.
 - _"Adapt this script to the Synthesizer version I actually have installed."_ — take outdated scripts and update them for your specific Synthesizer install.
 - _"Generate a young and old galaxy with black holes and produce plots showing whether JWST can detect the AGN contribution for a set of reasonable redshifts and galaxy properties."_ — render a complex astrophysics question by applying its knowledge of the local installation and available grids without the need to build up the quick script yourself.
 
-Synthia is at its most useful where an answer depends on your specific installation: which version, which grids, which spectra those grids hold. It is least useful for pure astrophysics questions not specific to Synthesizer, which the model can answer without it.
+Synthia is at its most useful where an answer depends on your specific installation: which version, which grids, which spectra those grids hold — and on what the project has published that you do not have yet. It is least useful for pure astrophysics questions not specific to Synthesizer, which the model can answer without it.
+
+Synthia can also answer questions about the [Syndex catalogue](https://synthesizer-project.org/syndex), the project's database of published grids, instruments and test data: what exists, what a grid contains, and which release to take. Downloading stays with `synthesizer-download`, which Synthia gives you the command for rather than running.
 
 ## Performance
 
-The benchmarks directory contains a series of 15 tests for common Synthia prompts. These were run on a bare agent (i.e. no plugins, MCPs, or skills) using Sonnet 5 with and without Synthia. Below is a comparison of the usage and runtime.
+The benchmarks directory contains a series of tests for common Synthia prompts. These were run on a bare agent (i.e. no plugins, MCPs, or skills) using Sonnet 5 with and without Synthia. Below is a comparison of the usage and runtime, measured over the 15 cases that predate the catalogue tools.
 
 | metric            | baseline | synthia | change |
 | ----------------- | -------- | ------- | ------ |
